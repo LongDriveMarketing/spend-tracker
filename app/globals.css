@@ -1,26 +1,182 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --green: #22c55e;
+  --green-dim: #16a34a;
+  --red: #ef4444;
+  --bg: #0a0a0a;
+  --card: #151515;
+  --border: #262626;
+  --text: #fafafa;
+  --text-dim: #a3a3a3;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  transition: all 0.15s;
+}
+.pin-dot.filled {
+  background: var(--green);
+  border-color: var(--green);
+}
+.pin-key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 500;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.1s;
+  user-select: none;
+}
+.pin-key:active {
+  background: var(--green);
+  border-color: var(--green);
+  transform: scale(0.95);
+}
+
+.cat-pill {
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cat-pill.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+}
+
+.amount-display {
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.amount-display .dollar {
+  font-size: 28px;
+  opacity: 0.5;
+  vertical-align: super;
+  margin-right: 2px;
+}
+
+@keyframes flash-green {
+  0% { background: var(--green); }
+  100% { background: var(--bg); }
+}
+.flash-success {
+  animation: flash-green 0.6s ease-out;
+}
+
+.entry-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 50;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.tab-btn.active {
+  color: var(--green);
+}
+.tab-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.person-toggle {
+  display: flex;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.person-btn {
+  flex: 1;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--card);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.person-btn.active {
+  background: var(--green);
+  color: #000;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.shake {
+  animation: shake 0.4s ease-out;
 }
