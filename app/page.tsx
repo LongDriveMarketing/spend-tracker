@@ -445,22 +445,25 @@ function StatsTab({ summary, loading, onRefresh }: { summary: Summary | null; lo
         .slice(0, 10)
     : [];
 
-  // Budget categories — show all budgeted categories even if $0 spent
+  // Budget categories — only show categories that have a budget > 0 OR spending this month
+  // To hide a category from Stats, just set its budget to 0 (or blank) in the Budget sheet
   const budgetCats: { cat: string; spent: number; budget: number }[] = [];
   if (summary) {
     const seen = new Set<string>();
-    // First: categories with budgets
+    // Categories with budgets set (skip $0 budgets — those are "turned off")
     for (const [cat, budget] of Object.entries(summary.budgets)) {
-      budgetCats.push({ cat, spent: summary.byCategoryMonth[cat] || 0, budget });
-      seen.add(cat);
+      if (budget > 0) {
+        budgetCats.push({ cat, spent: summary.byCategoryMonth[cat] || 0, budget });
+        seen.add(cat);
+      }
     }
-    // Then: categories with spending but no budget
+    // Categories with spending this month but no budget (still show so nothing hides)
     for (const [cat, spent] of Object.entries(summary.byCategoryMonth)) {
       if (!seen.has(cat)) {
         budgetCats.push({ cat, spent, budget: 0 });
       }
     }
-    // Sort by spent descending
+    // Sort: over-budget first, then by spent descending
     budgetCats.sort((a, b) => b.spent - a.spent);
   }
 
