@@ -18,6 +18,11 @@ function getSheets() {
     key = JSON.parse(fs.readFileSync(keyPath, "utf-8"));
   }
 
+  // Fix private key newlines — Vercel env vars often lose the \n characters
+  if (key.private_key) {
+    key.private_key = key.private_key.replace(/\\n/g, "\n");
+  }
+
   const auth = new google.auth.JWT({
     email: key.client_email,
     key: key.private_key,
