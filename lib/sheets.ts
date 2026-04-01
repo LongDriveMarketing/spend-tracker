@@ -8,8 +8,15 @@ let sheetsClient: ReturnType<typeof google.sheets> | null = null;
 function getSheets() {
   if (sheetsClient) return sheetsClient;
 
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH!;
-  const key = JSON.parse(fs.readFileSync(keyPath, "utf-8"));
+  let key;
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    // Vercel: inline JSON from env var
+    key = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+  } else {
+    // Local: file path
+    const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH!;
+    key = JSON.parse(fs.readFileSync(keyPath, "utf-8"));
+  }
 
   const auth = new google.auth.JWT({
     email: key.client_email,
