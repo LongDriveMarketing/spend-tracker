@@ -347,13 +347,21 @@ function LogTab({
         <div className="text-xs font-medium mb-2" style={{ color: "var(--text-dim)" }}>
           CATEGORY
         </div>
-        <div className="flex flex-wrap gap-2">
+        <select
+          value={category}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl outline-none appearance-none"
+          style={{
+            background: "var(--card)",
+            border: `1px solid ${category ? "var(--green)" : "var(--border)"}`,
+            color: category ? "var(--text)" : "var(--text-dim)",
+          }}
+        >
+          <option value="" disabled>Select a category...</option>
           {SPENDING_CATEGORIES.map((cat) => (
-            <button key={cat} className={`cat-pill ${category === cat ? "active" : ""}`} onClick={() => onCategoryChange(cat)}>
-              {cat}
-            </button>
+            <option key={cat} value={cat}>{cat}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       <button
