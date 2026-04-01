@@ -6,6 +6,11 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const entries = await getEntries(30);
-  return Response.json({ entries });
+  try {
+    const entries = await getEntries(30);
+    return Response.json({ entries });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: message }, { status: 500 });
+  }
 }
