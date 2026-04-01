@@ -124,10 +124,10 @@ export async function getSummary(): Promise<{
     byPerson[who] = (byPerson[who] || 0) + amount;
   }
 
-  // Pull budget targets from Budget sheet (rows 4-23, col A = category, col C = budget)
+  // Pull app-specific budget targets from Quick Log sheet (J:K, row 1 = headers)
   const budgetRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: "'Budget'!A4:C23",
+    range: `'${SHEET_NAME}'!J2:K50`,
     valueRenderOption: "FORMATTED_VALUE",
   });
 
@@ -135,7 +135,7 @@ export async function getSummary(): Promise<{
   const budgets: Record<string, number> = {};
   for (const bRow of budgetRows) {
     const cat = bRow[0];
-    const rawBudget = String(bRow[2] || "0").replace(/[$,]/g, "");
+    const rawBudget = String(bRow[1] || "0").replace(/[$,]/g, "");
     const budgetAmt = parseFloat(rawBudget) || 0;
     if (cat && budgetAmt > 0) {
       budgets[cat] = budgetAmt;
