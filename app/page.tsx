@@ -313,11 +313,11 @@ function LogTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 max-w-[280px] mx-auto">
+      <div className="grid grid-cols-3 gap-3 max-w-[340px] mx-auto">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"].map((key) => (
           <button
             key={key}
-            className="h-12 rounded-lg flex items-center justify-center text-lg font-medium"
+            className="h-16 rounded-xl flex items-center justify-center text-2xl font-semibold"
             style={{ background: "var(--card)", border: "1px solid var(--border)" }}
             onClick={() => onAmountKey(key)}
           >
