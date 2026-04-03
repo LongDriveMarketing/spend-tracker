@@ -419,7 +419,7 @@ function HistoryTab({ entries, loading, onRefresh }: { entries: Entry[]; loading
             </div>
           </div>
           <div className="font-bold text-base" style={{ color: "var(--red)" }}>
-            ${parseFloat(e.amount || "0").toFixed(2)}
+            ${parseFloat(String(e.amount || "0").replace(/[$,]/g, "")).toFixed(2)}
           </div>
         </div>
       ))}
