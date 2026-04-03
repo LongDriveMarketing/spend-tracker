@@ -166,7 +166,10 @@ function MainApp({ pin }: { pin: string }) {
 
   useEffect(() => {
     if (tab === "history") loadEntries();
-    if (tab === "stats") loadSummary();
+    if (tab === "stats") {
+      loadSummary();
+      loadEntries();
+    }
   }, [tab, loadEntries, loadSummary]);
 
   const handleSubmit = async () => {
@@ -239,7 +242,7 @@ function MainApp({ pin }: { pin: string }) {
           />
         )}
         {tab === "history" && <HistoryTab entries={entries} loading={loadingEntries} onRefresh={loadEntries} />}
-        {tab === "stats" && <StatsTab summary={summary} loading={loadingSummary} onRefresh={loadSummary} />}
+        {tab === "stats" && <StatsTab summary={summary} entries={entries} loading={loadingSummary} onRefresh={() => { loadSummary(); loadEntries(); }} />}
       </div>
 
       <div className="tab-bar">
@@ -427,7 +430,9 @@ function HistoryTab({ entries, loading, onRefresh }: { entries: Entry[]; loading
   );
 }
 
-function StatsTab({ summary, loading, onRefresh }: { summary: Summary | null; loading: boolean; onRefresh: () => void }) {
+function StatsTab({ summary, entries, loading, onRefresh }: { summary: Summary | null; entries: Entry[]; loading: boolean; onRefresh: () => void }) {
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
+  const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
   const fmt = (n: number) => "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const fmtShort = (n: number) => {
     if (n >= 1000) return "$" + (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
@@ -438,6 +443,21 @@ function StatsTab({ summary, loading, onRefresh }: { summary: Summary | null; lo
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const dayOfMonth = now.getDate();
   const pctThrough = dayOfMonth / daysInMonth;
+
+  // Filter entries to current month only
+  const monthEntries = entries.filter((e) => {
+    const parts = e.date?.split("/");
+    if (!parts || parts.length < 3) return false;
+    const m = parseInt(parts[0], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    return m === now.getMonth() && y === now.getFullYear();
+  });
+
+  const getEntriesForCategory = (cat: string) =>
+    monthEntries.filter((e) => e.category === cat);
+
+  const getEntriesForPerson = (person: string) =>
+    monthEntries.filter((e) => e.who === person);
 
   const sortedCats = summary
     ? Object.entries(summary.byCategoryMonth)
@@ -556,9 +576,43 @@ function StatsTab({ summary, loading, onRefresh }: { summary: Summary | null; lo
               <div className="text-xs font-medium mb-3" style={{ color: "var(--text-dim)" }}>BY PERSON</div>
               <div className="grid grid-cols-2 gap-3">
                 {Object.entries(summary.byPerson).map(([person, total]) => (
-                  <div key={person} className="stat-card">
-                    <div className="text-xs mb-1" style={{ color: "var(--text-dim)" }}>{person}</div>
-                    <div className="text-lg font-bold">{fmt(total)}</div>
+                  <div key={person}>
+                    <div
+                      className="stat-card cursor-pointer active:scale-[0.98] transition-transform"
+                      onClick={() => setExpandedPerson(expandedPerson === person ? null : person)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-xs mb-1" style={{ color: "var(--text-dim)" }}>{person}</div>
+                          <div className="text-lg font-bold">{fmt(total)}</div>
+                        </div>
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          style={{ color: "var(--text-dim)", transform: expandedPerson === person ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </div>
+                    </div>
+                    {expandedPerson === person && (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {getEntriesForPerson(person).length === 0 ? (
+                          <div className="text-xs px-3 py-2" style={{ color: "var(--text-dim)" }}>No entries this month</div>
+                        ) : (
+                          getEntriesForPerson(person).map((e, i) => (
+                            <div key={i} className="flex justify-between items-center px-3 py-2 rounded-lg" style={{ background: "var(--card)" }}>
+                              <div>
+                                <div className="text-xs font-medium">{e.description}</div>
+                                <div className="text-xs" style={{ color: "var(--text-dim)" }}>{e.category} &middot; {e.date}</div>
+                              </div>
+                              <div className="text-xs font-bold" style={{ color: "var(--red)" }}>
+                                ${parseFloat(String(e.amount || "0").replace(/[$,]/g, "")).toFixed(2)}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -577,47 +631,81 @@ function StatsTab({ summary, loading, onRefresh }: { summary: Summary | null; lo
                   const overBudget = budget > 0 && spent > budget;
                   const aheadOfPace = budget > 0 && spent > budget * pctThrough;
                   const barColor = overBudget ? "var(--red)" : aheadOfPace ? "#f59e0b" : "var(--green)";
+                  const isExpanded = expandedCat === cat;
+                  const catEntries = getEntriesForCategory(cat);
 
                   return (
                     <div key={cat}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>{cat}</span>
-                        <span className="font-medium">
-                          {fmt(spent)}
-                          {budget > 0 && (
-                            <span style={{ color: "var(--text-dim)" }}> / {fmtShort(budget)}</span>
-                          )}
-                        </span>
+                      <div
+                        className="cursor-pointer active:opacity-80 transition-opacity"
+                        onClick={() => setExpandedCat(isExpanded ? null : cat)}
+                      >
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="flex items-center gap-1">
+                            {cat}
+                            <svg
+                              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                              style={{ color: "var(--text-dim)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </span>
+                          <span className="font-medium">
+                            {fmt(spent)}
+                            {budget > 0 && (
+                              <span style={{ color: "var(--text-dim)" }}> / {fmtShort(budget)}</span>
+                            )}
+                          </span>
+                        </div>
+                        {budget > 0 ? (
+                          <div className="h-2 rounded-full relative" style={{ background: "var(--border)" }}>
+                            <div
+                              className="absolute top-0 bottom-0 w-0.5"
+                              style={{ background: "var(--text-dim)", left: `${pctThrough * 100}%`, opacity: 0.4 }}
+                            />
+                            <div
+                              className="h-2 rounded-full"
+                              style={{
+                                background: barColor,
+                                width: `${Math.min(pct * 100, 100)}%`,
+                                transition: "width 0.3s",
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-2 rounded-full" style={{ background: "var(--border)" }}>
+                            <div className="h-2 rounded-full" style={{ background: "var(--text-dim)", width: "100%", opacity: 0.3 }} />
+                          </div>
+                        )}
+                        {budget > 0 && (
+                          <div className="text-xs mt-1" style={{ color: overBudget ? "var(--red)" : aheadOfPace ? "#f59e0b" : "var(--green)" }}>
+                            {overBudget
+                              ? `${fmtShort(spent - budget)} over budget`
+                              : `${fmtShort(budget - spent)} left`}
+                          </div>
+                        )}
+                        {budget === 0 && (
+                          <div className="text-xs mt-1" style={{ color: "var(--text-dim)" }}>No budget set</div>
+                        )}
                       </div>
-                      {budget > 0 ? (
-                        <div className="h-2 rounded-full relative" style={{ background: "var(--border)" }}>
-                          <div
-                            className="absolute top-0 bottom-0 w-0.5"
-                            style={{ background: "var(--text-dim)", left: `${pctThrough * 100}%`, opacity: 0.4 }}
-                          />
-                          <div
-                            className="h-2 rounded-full"
-                            style={{
-                              background: barColor,
-                              width: `${Math.min(pct * 100, 100)}%`,
-                              transition: "width 0.3s",
-                            }}
-                          />
+                      {isExpanded && (
+                        <div className="mt-2 ml-2 flex flex-col gap-1 border-l-2 pl-3" style={{ borderColor: "var(--border)" }}>
+                          {catEntries.length === 0 ? (
+                            <div className="text-xs py-2" style={{ color: "var(--text-dim)" }}>No entries this month</div>
+                          ) : (
+                            catEntries.map((e, i) => (
+                              <div key={i} className="flex justify-between items-center py-2">
+                                <div>
+                                  <div className="text-xs font-medium">{e.description}</div>
+                                  <div className="text-xs" style={{ color: "var(--text-dim)" }}>{e.who} &middot; {e.date}</div>
+                                </div>
+                                <div className="text-xs font-bold" style={{ color: "var(--red)" }}>
+                                  ${parseFloat(String(e.amount || "0").replace(/[$,]/g, "")).toFixed(2)}
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      ) : (
-                        <div className="h-2 rounded-full" style={{ background: "var(--border)" }}>
-                          <div className="h-2 rounded-full" style={{ background: "var(--text-dim)", width: "100%", opacity: 0.3 }} />
-                        </div>
-                      )}
-                      {budget > 0 && (
-                        <div className="text-xs mt-1" style={{ color: overBudget ? "var(--red)" : aheadOfPace ? "#f59e0b" : "var(--green)" }}>
-                          {overBudget
-                            ? `${fmtShort(spent - budget)} over budget`
-                            : `${fmtShort(budget - spent)} left`}
-                        </div>
-                      )}
-                      {budget === 0 && (
-                        <div className="text-xs mt-1" style={{ color: "var(--text-dim)" }}>No budget set</div>
                       )}
                     </div>
                   );
